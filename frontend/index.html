@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>AI Complaint Analyzer</title>
+
+```
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        background: #eef2f7;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        width: 750px;
+        max-width: 92%;
+        margin: 40px auto;
+        background: white;
+        padding: 35px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 8px;
+        color: #222;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #777;
+        margin-bottom: 30px;
+    }
+
+    label {
+        font-weight: bold;
+        color: #333;
+    }
+
+    textarea {
+        width: 100%;
+        margin-top: 10px;
+        padding: 14px;
+        font-size: 16px;
+        border: 1px solid #d0d5db;
+        border-radius: 10px;
+        resize: vertical;
+        outline: none;
+    }
+
+    textarea:focus {
+        border-color: #555;
+    }
+
+    button {
+        width: 100%;
+        margin-top: 12px;
+        padding: 13px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        background: #333;
+        color: white;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #555;
+        transform: translateY(-1px);
+    }
+
+    #loading {
+        display: none;
+        text-align: center;
+        margin-top: 18px;
+        color: #555;
+        font-weight: bold;
+    }
+
+    .result {
+        margin-top: 25px;
+        padding: 22px;
+        background: #f8f9fb;
+        border: 1px solid #e2e5e9;
+        border-radius: 12px;
+    }
+
+    .result h2,
+    .result h3 {
+        margin-top: 0;
+        color: #222;
+    }
+
+    .result p {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .value {
+        font-weight: bold;
+    }
+
+    /* Priority badges */
+
+    .priority {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .high {
+        background: #ffe1e1;
+        color: #c62828;
+    }
+
+    .medium {
+        background: #fff0cc;
+        color: #a66a00;
+    }
+
+    .low {
+        background: #dff5e4;
+        color: #26733d;
+    }
+
+    /* Dashboard */
+
+    #dashboard {
+        margin-top: 25px;
+    }
+
+    .dashboard-title {
+        margin-top: 25px;
+        margin-bottom: 15px;
+        color: #222;
+    }
+
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .card {
+        padding: 20px;
+        background: #f8f9fb;
+        border: 1px solid #e2e5e9;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .card h3 {
+        margin: 0 0 10px 0;
+        font-size: 15px;
+        color: #666;
+    }
+
+    .card p {
+        font-size: 30px;
+        font-weight: bold;
+        margin: 0;
+        color: #222;
+    }
+
+    .category-list {
+        margin-top: 15px;
+        padding: 18px;
+        background: #f8f9fb;
+        border: 1px solid #e2e5e9;
+        border-radius: 12px;
+    }
+
+    .category-list p {
+        margin: 10px 0;
+    }
+
+    /* Mobile */
+
+    @media (max-width: 600px) {
+        .container {
+            margin: 20px auto;
+            padding: 22px;
+        }
+
+        .dashboard-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+<div class="container">
+
+```
+<h1>AI Complaint Analyzer</h1>
+
+<p class="subtitle">
+    Analyze customer complaints quickly and efficiently
+</p>
+
+<label for="complaint">Enter your complaint:</label>
+
+<textarea
+    id="complaint"
+    rows="6"
+    placeholder="Example: My payment was deducted but my order was not placed..."
+></textarea>
+
+<button onclick="analyzeComplaint()">
+    Analyze Complaint
+</button>
+
+<button onclick="showHistory()">
+    View Complaint History
+</button>
+
+<button onclick="showDashboard()">
+    View Dashboard
+</button>
+
+<div id="loading">
+    Analyzing complaint...
+</div>
+
+<div id="history"></div>
+
+<div id="dashboard"></div>
+
+<div class="result">
+
+    <h2>Analysis Result</h2>
+
+    <p>
+        Category:
+        <span id="category" class="value">-</span>
+    </p>
+
+    <p>
+        Priority:
+        <span id="priority" class="value">-</span>
+    </p>
+
+    <p>
+        Summary:
+        <span id="summary" class="value">-</span>
+    </p>
+
+</div>
+```
+
+</div>
+
+<script>
+
+async function analyzeComplaint() {
+
+    const complaint =
+        document.getElementById("complaint").value;
+
+    if (complaint.trim() === "") {
+        alert("Please enter a complaint.");
+        return;
+    }
+
+    document.getElementById("loading").style.display = "block";
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/analyze-complaint",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    complaint: complaint
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        document.getElementById("category").textContent =
+            data.category;
+
+        const priorityElement =
+            document.getElementById("priority");
+
+        priorityElement.textContent = data.priority;
+
+        priorityElement.className = "value priority";
+
+        if (data.priority === "High") {
+            priorityElement.classList.add("high");
+        }
+        else if (data.priority === "Medium") {
+            priorityElement.classList.add("medium");
+        }
+        else {
+            priorityElement.classList.add("low");
+        }
+
+        document.getElementById("summary").textContent =
+            data.summary;
+
+    }
+
+    catch (error) {
+
+        alert("Unable to connect to the backend.");
+        console.log(error);
+
+    }
+
+    finally {
+
+        document.getElementById("loading").style.display = "none";
+
+    }
+}
+
+
+async function showHistory() {
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/history"
+        );
+
+        const data = await response.json();
+
+        const historyDiv =
+            document.getElementById("history");
+
+        historyDiv.innerHTML =
+            "<h2 class='dashboard-title'>Complaint History</h2>";
+
+        data.history.forEach((item, index) => {
+
+            let priorityClass = "low";
+
+            if (item.priority === "High") {
+                priorityClass = "high";
+            }
+            else if (item.priority === "Medium") {
+                priorityClass = "medium";
+            }
+
+            historyDiv.innerHTML += `
+                <div class="result">
+
+                    <h3>Complaint ${index + 1}</h3>
+
+                    <p>
+                        <strong>Complaint:</strong><br>
+                        ${item.complaint}
+                    </p>
+
+                    <p>
+                        <strong>Category:</strong>
+                        ${item.category}
+                    </p>
+
+                    <p>
+                        <strong>Priority:</strong>
+                        <span class="priority ${priorityClass}">
+                            ${item.priority}
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>Summary:</strong><br>
+                        ${item.summary}
+                    </p>
+
+                </div>
+            `;
+
+        });
+
+    }
+
+    catch (error) {
+
+        alert("Unable to load complaint history.");
+        console.log(error);
+
+    }
+}
+
+
+async function showDashboard() {
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/dashboard"
+        );
+
+        const data = await response.json();
+
+        const dashboardDiv =
+            document.getElementById("dashboard");
+
+        dashboardDiv.innerHTML = `
+
+            <h2 class="dashboard-title">
+                Dashboard
+            </h2>
+
+            <div class="dashboard-cards">
+
+                <div class="card">
+                    <h3>Total Complaints</h3>
+                    <p>${data.total_complaints}</p>
+                </div>
+
+                <div class="card">
+                    <h3>High Priority</h3>
+                    <p>${data.high_priority}</p>
+                </div>
+
+                <div class="card">
+                    <h3>Medium Priority</h3>
+                    <p>${data.medium_priority}</p>
+                </div>
+
+                <div class="card">
+                    <h3>Low Priority</h3>
+                    <p>${data.low_priority}</p>
+                </div>
+
+            </div>
+
+            <h3 class="dashboard-title">
+                Category Statistics
+            </h3>
+
+            <div class="category-list">
+        `;
+
+        for (const category in data.category_count) {
+
+            dashboardDiv.innerHTML += `
+                <p>
+                    ${category}:
+                    <strong>
+                        ${data.category_count[category]}
+                    </strong>
+                </p>
+            `;
+
+        }
+
+        dashboardDiv.innerHTML += `
+            </div>
+        `;
+
+    }
+
+    catch (error) {
+
+        alert("Unable to load dashboard.");
+        console.log(error);
+
+    }
+}
+
+</script>
+
+</body>
+</html>
