@@ -282,7 +282,7 @@ async function analyzeComplaint() {
     try {
 
         const response = await fetch(
-            "http://127.0.0.1:8000/analyze-complaint",
+            "https://ai-complaint-analyzer-5v7a.onrender.com/analyze-complaint",
             {
                 method: "POST",
                 headers: {
@@ -411,7 +411,7 @@ async function showDashboard() {
     try {
 
         const response = await fetch(
-            "http://127.0.0.1:8000/dashboard"
+            "https://ai-complaint-analyzer-5v7a.onrender.com/dashboard"
         );
 
         const data = await response.json();
