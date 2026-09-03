@@ -5,6 +5,8 @@ from google import genai
 from pydantic import BaseModel
 import os
 import json
+import time
+
 
 # Load environment variables from .env
 load_dotenv()
@@ -87,11 +89,30 @@ Priority rules:
 
     try:
 
-        # Send complaint to Gemini
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt
-        )
+        # Send complaint to Gemini with retry
+        response = None
+
+        for attempt in range(3):
+            try:
+
+                response = client.models.generate_content(
+                    model="gemini-3.6-flash",
+                    contents=prompt
+                )
+
+                break
+
+            except Exception as error:
+
+                print(
+                    f"Gemini attempt {attempt + 1} failed:",
+                    error
+                )
+
+                if attempt < 2:
+                    time.sleep(3)
+                else:
+                    raise error
 
         # Get AI response
         ai_text = response.text.strip()
